@@ -4,3 +4,9 @@
 *.png
 *.pth
 events.out.tfevents.*
+*.zip
+*.log
+datasets/
+.vscode/
+checkpoints/
+plots/
