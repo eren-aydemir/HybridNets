@@ -29,15 +29,6 @@ RUN pip3 install path
 RUN pip3 install tensorboardX
 RUN pip3 install albumentations>=1.1.0
 RUN pip3 install opencv_python_headless==4.1.2.30
-
-#RUN pip3 install albumentations>=1.1.0
-#RUN pip3 install matplotlib>=3.2.2
-#RUN pip3 install numpy>=1.21.2
-#RUN pip3 install opencv_python_headless>=4.5.5.62
-#RUN pip3 install PyYAML>=3.13
-#RUN pip3 install scipy>=1.4.1
-#RUN pip3 install seaborn>=0.11.2
-#RUN pip3 install tensorboardX>=2.4.1
-#RUN pip3 install torch>=1.10.0
-#RUN pip3 install torchvision>=0.11.0
-#RUN pip3 install tqdm>=4.61.2
+RUN pip3 install seaborn>=0.11.2
+RUN pip3 install tqdm>=4.61.2
+RUN pip3 install PyYAML>=3.13
