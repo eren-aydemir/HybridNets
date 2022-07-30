@@ -1,0 +1,42 @@
+{
+	"name": "HybridNets Dev Container",
+	"build": {"dockerfile": "Dockerfile"},
+	"runArgs": [ "--gpus", "all", "-it", "--rm", "--runtime=nvidia", "--ipc=host", "--ulimit", "memlock=-1"],
+	"mounts": [
+		"source=/mnt/lustre/dgxuser/public_datasets_original/BDD,target=/workspaces/HybridNets/datasets,type=bind,consistency=cached"
+	  ],
+	"customizations": 
+	{
+		"vscode": 
+		{
+			"settings": 
+			{ 
+				"python.defaultInterpreterPath": "/usr/local/bin/python",
+				"python.linting.enabled": true,
+				"python.linting.pylintEnabled": true,
+				"python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
+				"python.formatting.blackPath": "/usr/local/py-utils/bin/black",
+				"python.formatting.yapfPath": "/usr/local/py-utils/bin/yapf",
+				"python.linting.banditPath": "/usr/local/py-utils/bin/bandit",
+				"python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
+				"python.linting.mypyPath": "/usr/local/py-utils/bin/mypy",
+				"python.linting.pycodestylePath": "/usr/local/py-utils/bin/pycodestyle",
+				"python.linting.pydocstylePath": "/usr/local/py-utils/bin/pydocstyle",
+				"python.linting.pylintPath": "/usr/local/py-utils/bin/pylint"
+			},
+			
+			// Add the IDs of extensions you want installed when the container is created.
+			"extensions": 
+			[
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"dbaeumer.vscode-eslint"
+			]
+		}
+	},
+
+	"postStartCommand": "git config --global user.email \"${localEnv:VSCODE_CONTAINER_GIT_EMAIL}\" && git config --global user.name \"${localEnv:VSCODE_CONTAINER_GIT_USER}\"",
+	"postCreateCommand": "git config --global --add safe.directory /workspaces/l4-highway-pilot-neural-base", 
+	
+	"forwardPorts": [3000]
+}
