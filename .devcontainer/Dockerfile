@@ -22,7 +22,7 @@ RUN pip3 install pycuda && \
     pip3 install PyYAML>=3.13 && \
     pip3 install pytorch-lightning
 
-## Switch to non-root user
-#RUN useradd -m -d /home/dgxuser -s /bin/bash -u 1001 dgxuser
-#USER dgxuser
-#WORKDIR /home/dgxuser
+# Switch to non-root user
+RUN useradd -m -d /home/dgxuser -s /bin/bash -u 1001 dgxuser
+USER dgxuser
+WORKDIR /home/dgxuser
