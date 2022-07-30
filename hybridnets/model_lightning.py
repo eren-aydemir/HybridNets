@@ -49,7 +49,7 @@ class ModelWithLightning(LightningModule):
         self.log("cls_loss",    cls_loss,   on_step=True, prog_bar=True)
         self.log("reg_loss",    reg_loss,   on_step=True, prog_bar=True)
         self.log("seg_loss",    seg_loss,   on_step=True, prog_bar=True)
-        self.log("total_loss",  loss,       on_step=True, prog_bar=False)
+        self.log("total_loss",  loss,       on_step=True, prog_bar=True)
 
         return loss
 

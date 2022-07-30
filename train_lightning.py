@@ -136,7 +136,7 @@ def train(opt):
     # wrap the model with loss function, to reduce the memory usage on gpu0 and speedup
     model = ModelWithLightning(model, opt, debug=opt.debug)
 
-    logger = TensorBoardLogger("tb_logs", name="hybridnets")
+    logger = TensorBoardLogger("checkpoints/lightning-bdd100k", name="tensorboard")
 
     checkpoint_callback = ModelCheckpoint(
         monitor='total_loss',
@@ -157,7 +157,6 @@ def train(opt):
     trainer.fit(model, dm)
 
     print('BEST CHECKPOINT:', checkpoint_callback.best_model_path)
-
 
 if __name__ == '__main__':
     opt = get_args()
