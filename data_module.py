@@ -45,24 +45,30 @@ class HybridNetsDataModule(LightningDataModule):
             )
 
     def train_dataloader(self):
-        return DataLoaderX(
-            self.train_set,
-            batch_size=self.opt.batch_size,
-            shuffle=True,
-            num_workers=self.opt.num_workers,
-            pin_memory=self.params.pin_memory,
-            collate_fn=BddDataset.collate_fn
-        )
+        #return DataLoaderX(
+        #    self.train_set,
+        #    batch_size=self.opt.batch_size,
+        #    shuffle=True,
+        #    num_workers=self.opt.num_workers,
+        #    pin_memory=self.params.pin_memory,
+        #    collate_fn=BddDataset.collate_fn
+        #)
+        return torch.utils.data.DataLoader(self.train_set, batch_size=self.opt.batch_size, 
+                                            shuffle=True, num_workers=self.opt.num_workers, 
+                                            pin_memory=self.params.pin_memory, collate_fn=BddDataset.collate_fn)
 
     def val_dataloader(self):
-        return DataLoaderX(
-            self.val_set,
-            batch_size=self.opt.batch_size,
-            shuffle=False,
-            num_workers=self.opt.num_workers,
-            pin_memory=self.params.pin_memory,
-            collate_fn=BddDataset.collate_fn
-        )
+        #return DataLoaderX(
+        #    self.val_set,
+        #    batch_size=self.opt.batch_size,
+        #    shuffle=False,
+        #    num_workers=self.opt.num_workers,
+        #    pin_memory=self.params.pin_memory,
+        #    collate_fn=BddDataset.collate_fn
+        #)
+        return torch.utils.data.DataLoader(self.val_set, batch_size=self.opt.batch_size, 
+                                            shuffle=False, num_workers=self.opt.num_workers, 
+                                            pin_memory=self.params.pin_memory, collate_fn=BddDataset.collate_fn)
 
     #def test_dataloader(self):
     #    return DataLoader(self.mnist_test, batch_size=self.batch_size, num_workers=self.num_workers)

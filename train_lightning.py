@@ -1,29 +1,17 @@
 import argparse
-import datetime
 import os
-import traceback
 
-import numpy as np
 import torch
-from tensorboardX import SummaryWriter
-from torch import nn
-from torchvision import transforms
-from tqdm.autonotebook import tqdm
 
 from val import val
 from backbone import HybridNetsBackbone
-from utils.utils import get_last_weights, init_weights, boolean_string, \
-    save_checkpoint, DataLoaderX, Params
-from hybridnets.dataset import BddDataset
-from hybridnets.autoanchor import run_anchor
+from utils.utils import get_last_weights, init_weights, boolean_string, Params
 from hybridnets.model_lightning import ModelWithLightning
 from utils.constants import *
 from data_module import HybridNetsDataModule
 
 from pytorch_lightning import Trainer
-from pytorch_lightning.callbacks.progress import TQDMProgressBar
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
-from pytorch_lightning.strategies import DeepSpeedStrategy
 from pytorch_lightning.loggers import TensorBoardLogger
 
 def get_args():
@@ -151,21 +139,24 @@ def train(opt):
     logger = TensorBoardLogger("tb_logs", name="hybridnets")
 
     checkpoint_callback = ModelCheckpoint(
-        monitor='batch_loss',
+        monitor='total_loss',
         dirpath='checkpoints/lightning-bdd100k',
-        filename='hybridnets-epoch{epoch:02d}-batch_loss{batch_loss:.2f}',
+        #filename='hybridnets-epoch{epoch:02d}-batch_loss{total_loss:.2f}',
+        filename='hybridnets-d{opt.compound_coef}_{epoch}_{step}.pth',
         auto_insert_metric_name=False)
 
     trainer = Trainer(
-        gpus=6, 
+        gpus=7, 
         accelerator='gpu', 
         strategy="ddp", 
-        max_epochs=100, 
+        max_epochs=opt.num_epochs, 
         logger=logger,
         callbacks=[checkpoint_callback]
     )
 
     trainer.fit(model, dm)
+
+    print('BEST CHECKPOINT:', checkpoint_callback.best_model_path)
 
 
 if __name__ == '__main__':
