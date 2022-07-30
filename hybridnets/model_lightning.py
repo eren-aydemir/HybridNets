@@ -53,6 +53,26 @@ class ModelWithLightning(LightningModule):
 
         return loss
 
+    def validation_step(self, batch, batch_idx):
+        imgs = batch['img']
+        annotations = batch['annot']
+        seg_annot = batch['segmentation']
+
+        cls_loss, reg_loss, seg_loss = self.losses(imgs, annotations, seg_annot)
+
+        cls_loss = cls_loss.mean() if not self.opt.freeze_det else torch.tensor(0)
+        reg_loss = reg_loss.mean() if not self.opt.freeze_det else torch.tensor(0)
+        seg_loss = seg_loss.mean() if not self.opt.freeze_seg else torch.tensor(0)
+
+        loss = cls_loss + reg_loss + seg_loss
+
+        self.log("val_cls_loss",    cls_loss,   on_step=True, prog_bar=True)
+        self.log("val_reg_loss",    reg_loss,   on_step=True, prog_bar=True)
+        self.log("val_seg_loss",    seg_loss,   on_step=True, prog_bar=True)
+        self.log("val_total_loss",  loss,       on_step=True, prog_bar=True)
+
+        return loss
+
     def configure_optimizers(self):
         opt = torch.optim.AdamW(self.model.parameters(), self.opt.lr)
         return [opt], []
