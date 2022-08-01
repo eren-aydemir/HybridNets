@@ -87,4 +87,4 @@ class ModelWithLightning(LightningModule):
                                                                #min_lr=1e-6,
                                                                verbose=True)
 
-        return [optimizer], [scheduler]
+        return {'optimizer': optimizer, 'scheduler': scheduler, 'monitor': 'total_loss'}
