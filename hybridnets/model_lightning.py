@@ -53,26 +53,38 @@ class ModelWithLightning(LightningModule):
 
         return loss
 
-    # def validation_step(self, batch, batch_idx):
-    #     imgs = batch['img']
-    #     annotations = batch['annot']
-    #     seg_annot = batch['segmentation']
+    def validation_step(self, batch, batch_idx):
+        imgs = batch['img']
+        annotations = batch['annot']
+        seg_annot = batch['segmentation']
 
-    #     cls_loss, reg_loss, seg_loss = self.losses(imgs, annotations, seg_annot)
+        cls_loss, reg_loss, seg_loss = self.losses(imgs, annotations, seg_annot)
 
-    #     cls_loss = cls_loss.mean() if not self.opt.freeze_det else torch.tensor(0)
-    #     reg_loss = reg_loss.mean() if not self.opt.freeze_det else torch.tensor(0)
-    #     seg_loss = seg_loss.mean() if not self.opt.freeze_seg else torch.tensor(0)
+        cls_loss = cls_loss.mean() if not self.opt.freeze_det else torch.tensor(0)
+        reg_loss = reg_loss.mean() if not self.opt.freeze_det else torch.tensor(0)
+        seg_loss = seg_loss.mean() if not self.opt.freeze_seg else torch.tensor(0)
 
-    #     loss = cls_loss + reg_loss + seg_loss
+        loss = cls_loss + reg_loss + seg_loss
 
-    #     self.log("val_cls_loss",    cls_loss,   on_step=True, prog_bar=True)
-    #     self.log("val_reg_loss",    reg_loss,   on_step=True, prog_bar=True)
-    #     self.log("val_seg_loss",    seg_loss,   on_step=True, prog_bar=True)
-    #     self.log("val_total_loss",  loss,       on_step=True, prog_bar=True)
+        self.log("val_cls_loss",    cls_loss,   on_step=True, prog_bar=False)
+        self.log("val_reg_loss",    reg_loss,   on_step=True, prog_bar=False)
+        self.log("val_seg_loss",    seg_loss,   on_step=True, prog_bar=False)
+        self.log("val_total_loss",  loss,       on_step=True, prog_bar=False)
 
-    #     return loss
+        return {'val_loss': loss}
+
+    def validation_end(self, outputs):
+        # OPTIONAL
+        avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
+        self.log("val_avg_loss",    avg_loss,   on_epoch=True, prog_bar=True)
 
     def configure_optimizers(self):
-        opt = torch.optim.AdamW(self.model.parameters(), self.opt.lr)
-        return [opt], []
+        optimizer = torch.optim.AdamW(self.model.parameters(), self.opt.lr)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,
+                                                               #mode='min',
+                                                               #factor=0.2,
+                                                               patience=3,
+                                                               #min_lr=1e-6,
+                                                               verbose=True)
+
+        return [optimizer], [scheduler]
