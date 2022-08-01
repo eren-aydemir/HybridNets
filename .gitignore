@@ -11,3 +11,4 @@ datasets/
 checkpoints/
 plots/
 tb_logs/
+*.yaml
