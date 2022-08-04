@@ -138,17 +138,19 @@ def train(opt):
     # wrap the model with loss function, to reduce the memory usage on gpu0 and speedup
     model = ModelWithLightning(model, opt, debug=opt.debug)
 
-    logger = TensorBoardLogger("checkpoints1/lightning-bdd100k", name="tensorboard")
+    logger = TensorBoardLogger("checkpoints1/lightning-bdd100k/phase_2", name="tensorboard")
+
+    print('SAVE DIR:', 'checkpoints1/lightning-bdd100k/phase_2/tensorboard/version_' + str(logger.version))
 
     checkpoint_callback = ModelCheckpoint(
         monitor='total_loss',
-        dirpath='checkpoints1/lightning-bdd100k',
+        dirpath='checkpoints1/lightning-bdd100k/phase_2/tensorboard/version_' + str(logger.version),
         #filename='hybridnets-epoch{epoch:02d}-batch_loss{total_loss:.2f}',
         filename='hybridnets-d{opt.compound_coef}_{epoch}_{step}.pth',
         auto_insert_metric_name=False)
 
     trainer = Trainer(
-        gpus=7, 
+        gpus=7,
         accelerator='gpu', 
         strategy="ddp", 
         max_epochs=opt.num_epochs, 
