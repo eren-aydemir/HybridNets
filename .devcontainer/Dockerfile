@@ -32,3 +32,10 @@ RUN pip3 install opencv_python_headless==4.1.2.30
 RUN pip3 install seaborn>=0.11.2
 RUN pip3 install tqdm>=4.61.2
 RUN pip3 install PyYAML>=3.13
+RUN pip3 install monai
+RUN pip3 install torch-tb-profiler==0.4.0
+
+# Switch to non-root user
+RUN useradd -m -d /home/dgxuser -s /bin/bash -u 1001 dgxuser
+USER dgxuser
+WORKDIR /home/dgxuser
