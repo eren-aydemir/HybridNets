@@ -1,9 +1,5 @@
 import torch.nn as nn
 import torch
-from torchvision.ops.boxes import nms as nms_torch
-import torch.nn.functional as F
-import math
-from functools import partial
 from hybridnets.loss import FocalLoss, FocalLossSeg, TverskyLoss
 from hybridnets.model import *
 
@@ -19,34 +15,76 @@ class ModelWithLightning(LightningModule):
         self.debug = debug
         self.opt = opt
 
-    def forward(self, imgs, annotations, seg_annot, obj_list=None):
+    def forward(self, imgs):
         _, regression, classification, anchors, segmentation = self.model(imgs)
 
-        if self.debug:
-            cls_loss, reg_loss = self.criterion(classification, regression, anchors, annotations,
-                                                imgs=imgs, obj_list=obj_list)
-            tversky_loss = self.seg_criterion1(segmentation, seg_annot)
-            focal_loss = self.seg_criterion2(segmentation, seg_annot)
-        else:
-            cls_loss, reg_loss = self.criterion(classification, regression, anchors, annotations)
-            tversky_loss = self.seg_criterion1(segmentation, seg_annot)
-            focal_loss = self.seg_criterion2(segmentation, seg_annot)
+        return regression, classification, anchors, segmentation
+
+    def losses(self, imgs, annotations, seg_annot):
+        regression, classification, anchors, segmentation = self(imgs)
+
+        cls_loss, reg_loss = self.criterion(classification, regression, anchors, annotations)
+        tversky_loss = self.seg_criterion1(segmentation, seg_annot)
+        focal_loss = self.seg_criterion2(segmentation, seg_annot)
 
         seg_loss = tversky_loss + 1 * focal_loss
         # print("TVERSKY", tversky_loss)
         # print("FOCAL", focal_loss)
 
-        return cls_loss, reg_loss, seg_loss, regression, classification, anchors, segmentation
-
-    def training_step(self, batch, batch_idx):
-        imgs, annotations, seg_annot = batch
-        cls_loss, reg_loss, seg_loss, _, _, _, _ = self(imgs, annotations, seg_annot)
-
         return cls_loss, reg_loss, seg_loss
 
+    def training_step(self, batch, batch_idx):
+        imgs = batch['img']
+        annotations = batch['annot']
+        seg_annot = batch['segmentation']
+
+        cls_loss, reg_loss, seg_loss = self.losses(imgs, annotations, seg_annot)
+
+        cls_loss = cls_loss.mean() if not self.opt.freeze_det else torch.tensor(0)
+        reg_loss = reg_loss.mean() if not self.opt.freeze_det else torch.tensor(0)
+        seg_loss = seg_loss.mean() if not self.opt.freeze_seg else torch.tensor(0)
+
+        loss = cls_loss + reg_loss + seg_loss
+
+        self.log("cls_loss",    cls_loss,   on_step=True, prog_bar=True)
+        self.log("reg_loss",    reg_loss,   on_step=True, prog_bar=True)
+        self.log("seg_loss",    seg_loss,   on_step=True, prog_bar=True)
+        self.log("total_loss",  loss,       on_step=True, prog_bar=True)
+
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        imgs = batch['img']
+        annotations = batch['annot']
+        seg_annot = batch['segmentation']
+
+        cls_loss, reg_loss, seg_loss = self.losses(imgs, annotations, seg_annot)
+
+        cls_loss = cls_loss.mean() if not self.opt.freeze_det else torch.tensor(0)
+        reg_loss = reg_loss.mean() if not self.opt.freeze_det else torch.tensor(0)
+        seg_loss = seg_loss.mean() if not self.opt.freeze_seg else torch.tensor(0)
+
+        loss = cls_loss + reg_loss + seg_loss
+
+        self.log("val_cls_loss",    cls_loss,   on_step=True, prog_bar=False)
+        self.log("val_reg_loss",    reg_loss,   on_step=True, prog_bar=False)
+        self.log("val_seg_loss",    seg_loss,   on_step=True, prog_bar=False)
+        self.log("val_total_loss",  loss,       on_step=True, prog_bar=False)
+
+        return {'val_loss': loss}
+
+    def validation_end(self, outputs):
+        # OPTIONAL
+        avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
+        self.log("val_avg_loss",    avg_loss,   on_epoch=True, prog_bar=True)
 
     def configure_optimizers(self):
-        opt = torch.optim.AdamW(self.model.parameters(), self.opt.lr)
+        optimizer = torch.optim.AdamW(self.model.parameters(), self.opt.lr)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,
+                                                               #mode='min',
+                                                               #factor=0.2,
+                                                               patience=3,
+                                                               #min_lr=1e-6,
+                                                               verbose=True)
 
-        return [opt], []
-
+        return {'optimizer': optimizer, 'scheduler': scheduler, 'monitor': 'total_loss'}
