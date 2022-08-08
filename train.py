@@ -39,7 +39,7 @@ def get_args():
                                                                    'suggest using \'adamw\' until the'
                                                                    ' very final stage then switch to \'sgd\'')
     parser.add_argument('--num_epochs', type=int, default=500)
-    parser.add_argument('--val_interval', type=int, default=1, help='Number of epoches between valing phases')
+    parser.add_argument('--val_interval', type=int, default=30, help='Number of epoches between valing phases')
     parser.add_argument('--save_interval', type=int, default=500, help='Number of steps between saving')
     parser.add_argument('--es_min_delta', type=float, default=0.0,
                         help='Early stopping\'s parameter: minimum change loss to qualify as an improvement')
@@ -47,11 +47,11 @@ def get_args():
                         help='Early stopping\'s parameter: number of epochs with no improvement after which '
                              'training will be stopped. Set to 0 to disable this technique')
     parser.add_argument('--data_path', type=str, default='datasets/', help='The root folder of dataset')
-    parser.add_argument('--log_path', type=str, default='checkpoints/')
+    parser.add_argument('--log_path', type=str, default='checkpoints1/')
     parser.add_argument('-w', '--load_weights', type=str, default=None,
                         help='Whether to load weights from a checkpoint, set None to initialize,'
                              'set \'last\' to load last checkpoint')
-    parser.add_argument('--saved_path', type=str, default='checkpoints/')
+    parser.add_argument('--saved_path', type=str, default='checkpoints1/')
     parser.add_argument('--debug', type=boolean_string, default=False,
                         help='Whether visualize the predicted boxes of training, '
                              'the output images will be in test/, '
@@ -198,9 +198,9 @@ def train(opt):
         optimizer = torch.optim.AdamW(model.parameters(), opt.lr)
     else:
         optimizer = torch.optim.SGD(model.parameters(), opt.lr, momentum=0.9, nesterov=True)
-    # print(ckpt)
+    #print(ckpt)
     if opt.load_weights is not None and ckpt.get('optimizer', None):
-        optimizer.load_state_dict(ckpt['optimizer'])
+        optimizer.load_state_dict(ckpt['optimizer'].state_dict())
 
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, verbose=True)
 
@@ -237,7 +237,7 @@ def train(opt):
                         seg_annot = seg_annot.cuda()
 
                     optimizer.zero_grad()
-                    cls_loss, reg_loss, seg_loss, regression, classification, anchors, segmentation = model(imgs, annot,
+                    cls_loss, reg_loss, seg_loss, tversky_loss, focal_loss, regression, classification, anchors, segmentation = model(imgs, annot,
                                                                                                             seg_annot,
                                                                                                             obj_list=params.obj_list)
                     cls_loss = cls_loss.mean() if not opt.freeze_det else torch.tensor(0)
@@ -262,6 +262,8 @@ def train(opt):
                     writer.add_scalars('Regression_loss', {'train': reg_loss}, step)
                     writer.add_scalars('Classfication_loss', {'train': cls_loss}, step)
                     writer.add_scalars('Segmentation_loss', {'train': seg_loss}, step)
+                    writer.add_scalars('Tversky_loss', {'train': tversky_loss}, step)
+                    writer.add_scalars('Focal_loss', {'train': focal_loss}, step)
 
                     # log learning_rate
                     current_lr = optimizer.param_groups[0]['lr']
@@ -269,8 +271,10 @@ def train(opt):
 
                     step += 1
 
+                    filename_ckpt = f'hybridnets-p2-v6-d{opt.compound_coef}_{epoch}_{step}'
+
                     if step % opt.save_interval == 0 and step > 0:
-                        save_checkpoint(model, opt.saved_path, f'hybridnets-d{opt.compound_coef}_{epoch}_{step}.pth')
+                        save_checkpoint(model, opt.saved_path, filename_ckpt + '.pth')
                         print('checkpoint...')
 
                 except Exception as e:
@@ -281,11 +285,12 @@ def train(opt):
             scheduler.step(np.mean(epoch_loss))
 
             if epoch % opt.val_interval == 0:
-                best_fitness, best_loss, best_epoch = val(model, val_generator, params, opt, seg_mode, is_training=True,
+                best_fitness, best_loss, best_epoch = val(model, val_generator, params, opt, seg_mode, filename_ckpt, is_training=True,
                                                           optimizer=optimizer, writer=writer, epoch=epoch, step=step, 
                                                           best_fitness=best_fitness, best_loss=best_loss, best_epoch=best_epoch)
     except KeyboardInterrupt:
-        save_checkpoint(model, opt.saved_path, f'hybridnets-d{opt.compound_coef}_{epoch}_{step}.pth')
+        print('Exception Occured!')
+        save_checkpoint(model, opt.saved_path, filename_ckpt + '.pth')
     finally:
         writer.close()
 
