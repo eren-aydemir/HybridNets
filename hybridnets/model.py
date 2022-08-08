@@ -52,11 +52,11 @@ class ModelWithLoss(nn.Module):
             #
             # cv2.imwrite('anh.jpg',anh)
 
-        seg_loss = tversky_loss + 1 * focal_loss
+        seg_loss = tversky_loss + 0 * focal_loss
         # print("TVERSKY", tversky_loss)
         # print("FOCAL", focal_loss)
 
-        return cls_loss, reg_loss, seg_loss, regression, classification, anchors, segmentation
+        return cls_loss, reg_loss, seg_loss, tversky_loss, focal_loss, regression, classification, anchors, segmentation
 
 
 class SeparableConvBlock(nn.Module):

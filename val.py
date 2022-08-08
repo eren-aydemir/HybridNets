@@ -15,7 +15,7 @@ from utils.constants import *
 
 
 @torch.no_grad()
-def val(model, val_generator, params, opt, seg_mode, is_training, **kwargs):
+def val(model, val_generator, params, opt, seg_mode, filename_ckpt, is_training, **kwargs):
     model.eval()
 
     optimizer = kwargs.get('optimizer', None)
@@ -61,7 +61,7 @@ def val(model, val_generator, params, opt, seg_mode, is_training, **kwargs):
             annot = annot.cuda()
             seg_annot = seg_annot.cuda()
 
-        cls_loss, reg_loss, seg_loss, regression, classification, anchors, segmentation = model(imgs, annot,
+        cls_loss, reg_loss, seg_loss, _, _, regression, classification, anchors, segmentation = model(imgs, annot,
                                                                                                 seg_annot,
                                                                                                 obj_list=params.obj_list)
         cls_loss = cls_loss.mean()
@@ -240,14 +240,14 @@ def val(model, val_generator, params, opt, seg_mode, is_training, **kwargs):
                     'model': model,
                     'optimizer': optimizer}
             print("Saving checkpoint with best fitness", fi[0])
-            save_checkpoint(ckpt, opt.saved_path, f'hybridnets-d{opt.compound_coef}_{epoch}_{step}_best.pth')
+            save_checkpoint(ckpt, opt.saved_path, filename_ckpt + '_best.pth')
     else:
         # if not calculating map, save by best loss
         if is_training and loss + opt.es_min_delta < best_loss:
             best_loss = loss
             best_epoch = epoch
 
-            save_checkpoint(model, opt.saved_path, f'hybridnets-d{opt.compound_coef}_{epoch}_{step}_best.pth')
+            save_checkpoint(model, opt.saved_path, filename_ckpt + '_best.pth')
 
     # Early stopping
     if is_training and epoch - best_epoch > opt.es_patience > 0:

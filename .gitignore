@@ -1,8 +1,8 @@
 *.pyc
 *.jpg
-*.json
 *.png
 *.pth
+*.ckpt
 events.out.tfevents.*
 *.zip
 *.log
@@ -10,3 +10,5 @@ datasets/
 .vscode/
 checkpoints/
 plots/
+tb_logs/
+*.yaml

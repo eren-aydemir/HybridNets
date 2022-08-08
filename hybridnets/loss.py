@@ -10,6 +10,8 @@ from functools import partial
 from utils.plot import display
 from utils.constants import *
 
+from monai.losses import FocalLoss as FCMonai
+
 def calc_iou(a, b):
     # a(anchor) [boxes, (y1, x1, y2, x2)]
     # b(gt, coco-style) [boxes, (x1, y1, x2, y2)]
@@ -321,6 +323,7 @@ class FocalLossSeg(_Loss):
             reduction=reduction,
             normalized=normalized,
         )
+        self.fl_g2_criterion = FCMonai(reduction='none', gamma=gamma)
 
     def forward(self, y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
 
@@ -335,6 +338,7 @@ class FocalLossSeg(_Loss):
                 y_true = y_true[not_ignored]
 
             loss = self.focal_loss_fn(y_pred, y_true)
+            #loss = self.fl_g2_criterion(y_pred, y_true)
 
         elif self.mode == MULTICLASS_MODE:
             num_classes = y_pred.size(1)

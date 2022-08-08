@@ -335,7 +335,7 @@ def clip_coords(boxes, shape):
         boxes[:, [1, 3]] = boxes[:, [1, 3]].clip(0, shape[0])  # y1, y2
 
 
-def ap_per_class(tp, conf, pred_cls, target_cls, plot=False, save_dir='precision-recall_curve.png', names=[]):
+def ap_per_class(tp, conf, pred_cls, target_cls, plot=False, save_dir='plots', names=[]):
     """ Compute the average precision, given the recall and precision curves.
     Source: https://github.com/rafaelpadilla/Object-Detection-Metrics.
     # Arguments
@@ -391,7 +391,7 @@ def ap_per_class(tp, conf, pred_cls, target_cls, plot=False, save_dir='precision
     i=r.mean(0).argmax()
 
     if plot:
-        plot_pr_curve(px, py, ap, save_dir, names)
+        plot_pr_curve(px, py, ap, save_dir + '/precision-recall_curve.png', names)
 
     return p[:, i], r[:, i], f1[:, i], ap, unique_classes.astype('int32')
 
@@ -844,7 +844,7 @@ def random_perspective(combination, targets=(), degrees=10, translate=.1, scale=
         else:  # affine
             im = cv2.warpAffine(im, M[:2], dsize=(width, height), borderValue=(114, 114, 114))
             for seg_class in seg:
-                seg[seg_class] = cv2.warpAffine(seg[seg_class], M[:2], dsize=(width, height), borderValue=0)
+                seg[seg_class] = cv2.warpAffine(seg[seg_class], M[:2], dsize=(width, height), borderValue=0, flags=cv2.INTER_NEAREST)
 
     # Visualize
     # import matplotlib.pyplot as plt
