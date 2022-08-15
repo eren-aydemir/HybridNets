@@ -327,4 +327,4 @@ if __name__ == "__main__":
     if args.num_gpus > 0:
         model.cuda()
 
-    val(model, val_generator, params, args, seg_mode, is_training=False)
+    val(model, val_generator, params, args, seg_mode, weights_path, is_training=False)

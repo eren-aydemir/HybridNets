@@ -1,4 +1,4 @@
-# Building on top of Bvidia Pytorch NGC Container 
+# Building on top of nvidia Pytorch NGC Container 
 FROM nvcr.io/nvidia/pytorch:22.05-py3
 
 # install dependencies
@@ -23,7 +23,7 @@ RUN pip3 install pycuda && \
     pip3 install pytorch-lightning && \
     pip3 install monai && \
     pip3 install torch-tb-profiler==0.4.0
-
+    
 # Switch to non-root user
 RUN useradd -m -d /home/dgxuser -s /bin/bash -u 1001 dgxuser
 USER dgxuser
